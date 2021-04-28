@@ -54,7 +54,7 @@ try
             }
             elseif ($Check_Process.StartTime.Count -eq 0) 
             {
-                throw "Unable to find the process start time for $Prcess"
+                throw "Unable to find the process start time for $Process"
             }
             else 
             {
