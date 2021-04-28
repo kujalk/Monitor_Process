@@ -1,0 +1,15 @@
+{
+    "Process":
+    [
+        "ciscowebexstart",
+        "Chrome",
+        "wininit",
+        "cool"
+    ],
+    "Interval":"55",
+    "EmailServer":"smtp.gmail.com",
+    "Recepients":"",
+    "Sender":"",
+    "Subject":"Test Proces",
+    "SmtpPort":"25"
+}
