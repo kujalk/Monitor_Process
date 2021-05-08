@@ -8,9 +8,8 @@ Date - 24/4/2021
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory)]
     [String]
-    $ConfigFile
+    $ConfigFile="E:\Upwork\Upwork_Process_Monitor\Config.json"
 )
 
 $Global:LogFile = "$PSScriptRoot\Process_Monitor.log"
@@ -38,7 +37,10 @@ function Write-Log
 
 try 
 {
+    Write-Log "Script started"
+
     $Config = Get-Content -Path $ConfigFile -ErrorAction Stop | ConvertFrom-Json
+    $EmailMessage = @()
 
     foreach($Process in $Config.Process)
     {
@@ -50,7 +52,20 @@ try
 
             if($Check_Process.StartTime.Count -gt 1)
             {
-                throw "More than 1 process is running for $Process"
+                Write-Log "More than 1 process is running for $Process"
+                $Count= 0
+
+                foreach($Entry in $Check_Process.StartTime)
+                {
+                    if($Entry.AddMinutes(($Config.Interval)) -lt (Get-Date))
+                    {   $Count +=1
+                        $Message = "Process $count of $Process is running more than $($Config.Interval) minutes"
+                        Write-Log $Message
+
+                        $EmailMessage+=$Message
+                        $EmailMessage+="`n"
+                    }
+                }
             }
             elseif ($Check_Process.StartTime.Count -eq 0) 
             {
@@ -63,9 +78,8 @@ try
                     $Message = "Process $Process is running more than $($Config.Interval) minutes"
                     Write-Log $Message
 
-                    Write-Log "Going to send mail"
-                    Send-MailMessage -From $Config.Sender -To $Config.Recepients -Subject $Config.Subject -Body $Message -SmtpServer $Config.EmailServer -Port $Config.SmtpPort -EA Stop
-                    Write-Log "Mail send successfully"
+                    $EmailMessage+=$Message
+                    $EmailMessage+="`n"
                 }
             }         
         }
@@ -74,6 +88,15 @@ try
             Write-Log "Error while checking the process $Process - $_" -Type ERR
         }
     } 
+
+    if($EmailMessage.Count -gt 0)
+    {
+        Write-Log "Going to send mail"
+        Send-MailMessage -From $Config.Sender -To $Config.Recepients -Subject $Config.Subject -Body $EmailMessage -SmtpServer $Config.EmailServer -Port $Config.SmtpPort -EA Stop
+        Write-Log "Mail send successfully"
+    }
+    
+    Write-Log "Script completed"   
 }
 catch 
 {
